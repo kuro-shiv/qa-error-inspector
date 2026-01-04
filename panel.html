@@ -1,6 +1,26 @@
-<body>
-  <h2>🚨 QA Error Inspector</h2>
-  <div id="errors"></div>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QA Error Inspector</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
 
-  <script src="panel.js"></script>
-</body>
+  <body>
+    <header class="panel-header">
+      <h2>🚨 QA Error Inspector</h2>
+
+      <div class="toolbar">
+        <input id="search" placeholder="Filter by URL or status" />
+        <button id="clearErrors">Clear</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="errors" class="errors-list"></div>
+    </main>
+
+    <script src="panel.js"></script>
+  </body>
+</html>
