@@ -65,7 +65,7 @@ qa-error-inspector/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/qa-error-inspector.git
+git clone https://github.com/kuro-shiv/qa-error-inspector
 ```
 
 2. Open Chrome and navigate to:
