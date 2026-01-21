@@ -1,9 +1,9 @@
 const searchInput = document.getElementById("search");
 
-if (searchInput && container) {
+if (searchInput) {
   searchInput.addEventListener("input", () => {
     const value = searchInput.value.toLowerCase();
-    const items = container.querySelectorAll(".error");
+    const items = document.querySelectorAll(".error");
 
     items.forEach((item) => {
       const text = item.innerText.toLowerCase();
@@ -30,7 +30,10 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
 
   if (method === "OPTIONS") return;
 
-  
+  // -------- HEADERS EXTRACTION --------
+  const requestHeaders = request?.request?.headers ? request.request.headers.map(h => `${h.name}: ${h.value}`).join('\n') : 'No request headers';
+  const responseHeaders = request?.response?.headers ? request.response.headers.map(h => `${h.name}: ${h.value}`).join('\n') : 'No response headers';
+
   // -------- PAYLOAD EXTRACTION --------
   let payload = null;
 
@@ -61,8 +64,20 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
     let graphQLError = null;
     try {
       const json = typeof body === "string" ? JSON.parse(body) : body;
-      if (json?.errors?.length) {
-        graphQLError = JSON.stringify(json.errors, null, 2);
+      let errors = [];
+      
+      if (Array.isArray(json)) {
+        json.forEach(item => {
+          if (item?.errors?.length) {
+            errors = errors.concat(item.errors);
+          }
+        });
+      } else if (json?.errors?.length) {
+        errors = json.errors;
+      }
+      
+      if (errors.length) {
+        graphQLError = JSON.stringify(errors, null, 2);
       }
     } catch (e) {
       if (String(body).includes('"errors"')) {
@@ -84,10 +99,41 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
     const shouldShow =
       graphQLError ||
       hasNoBody ||
-      isHttpError ||
-      hasErrorInBody;
+      isHttpError;
 
     if (!shouldShow || !container) return;
+
+    // -------- ERROR DETAILS EXTRACTION --------
+    let errorDetails = graphQLError;
+    let errorSummary = "Response Body";
+    
+    if (!errorDetails) {
+      if (isHttpError) {
+        // Try to extract error message for summary
+        let extractedMessage = "";
+        try {
+          const json = typeof body === "string" ? JSON.parse(body) : body;
+          if (json?.error) {
+            extractedMessage = json.error;
+          } else if (json?.message) {
+            extractedMessage = json.message;
+          } else if (json?.exception) {
+            extractedMessage = json.exception;
+          }
+        } catch (e) {
+          // keep extractedMessage empty
+        }
+        errorSummary = extractedMessage ? `HTTP ${status}: ${extractedMessage}` : `HTTP ${status} Error`;
+        errorDetails = body;
+      } else if (hasNoBody) {
+        errorSummary = "No Response Body";
+        errorDetails = body;
+      } else {
+        errorDetails = body;
+      }
+    } else {
+      errorSummary = "GraphQL Error";
+    }
 
     const div = document.createElement("div");
     div.className = "error";
@@ -101,16 +147,27 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       <div><b>Status:</b> ${status}</div>
 
       <details>
+        <summary><b>Request Headers</b></summary>
+        <pre>${requestHeaders}</pre>
+      </details>
+
+      <details>
         <summary><b>Request Payload</b></summary>
         <pre>${payload}</pre>
       </details>
 
+      <details>
+        <summary><b>Response body</b></summary>
+        <pre>${responseBody}</pre>
+      </details>
+
       <details open>
-        <summary><b>Response / Error</b></summary>
-        <pre>${graphQLError || body}</pre>
+        <summary><b>${errorSummary}</b></summary>
+        <pre>${errorDetails}</pre>
       </details>
     `;
 
     container.prepend(div);
   });
 });
+
