@@ -15,6 +15,79 @@ header {
   margin-bottom: 10px;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.filters input, .filters select {
+  padding: 5px;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  background: #1e293b;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.filters input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #0f172a;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #374151;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  color: #e5e7eb;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #fff;
+}
+
+.modal textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  background: #1e293b;
+  color: #e5e7eb;
+  font-family: monospace;
+  font-size: 12px;
+}
+
 button {
   padding: 5px 10px;
   background: #22c55e;
@@ -36,6 +109,24 @@ button:hover {
   padding: 8px;
   margin-bottom: 8px;
   border-radius: 4px;
+  position: relative;
+}
+
+.copy-jira-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.copy-jira-btn:hover {
+  background: #2563eb;
 }
 
 /* Timestamp */

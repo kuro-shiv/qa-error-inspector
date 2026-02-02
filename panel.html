@@ -10,18 +10,53 @@
   <body>
     <header class="header">
       <h3>🚨 QA Error Inspector</h3>
-      <button id="clearErrors">Clear</button>
+      <div class="header-buttons">
+        <button id="settingsBtn">Settings</button>
+        <button id="exportBtn">Export JSON</button>
+        <button id="clearErrors">Clear</button>
+      </div>
     </header>
 
-    <!-- Search bar -->
-    <input
-      id="search"
-      type="text"
-      placeholder="Search by URL"
-    />
+    <!-- Filters -->
+    <div class="filters">
+      <input
+        id="search"
+        type="text"
+        placeholder="Search by URL"
+      />
+      <select id="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="400">400</option>
+        <option value="401">401</option>
+        <option value="403">403</option>
+        <option value="404">404</option>
+        <option value="500">500</option>
+        <option value="502">502</option>
+        <option value="503">503</option>
+      </select>
+      <select id="methodFilter">
+        <option value="">All Methods</option>
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+        <option value="PUT">PUT</option>
+        <option value="DELETE">DELETE</option>
+        <option value="PATCH">PATCH</option>
+      </select>
+    </div>
 
     <!-- Errors will be injected here -->
     <div id="errors"></div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close" id="closeSettings">&times;</span>
+        <h3>Settings</h3>
+        <label for="ignoreUrls">Ignore URLs (one per line):</label>
+        <textarea id="ignoreUrls" rows="5" placeholder="e.g., /api/health&#10;/api/metrics"></textarea>
+        <button id="saveSettings">Save</button>
+      </div>
+    </div>
 
     <script src="panel.js"></script>
   </body>

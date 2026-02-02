@@ -1,15 +1,45 @@
+let ignoreUrls = [];
+let errors = [];
+
+// Load settings from storage
+chrome.storage.local.get(['ignoreUrls'], (result) => {
+  ignoreUrls = result.ignoreUrls || [];
+});
+
 const searchInput = document.getElementById("search");
+const statusFilter = document.getElementById("statusFilter");
+const methodFilter = document.getElementById("methodFilter");
+
+function applyFilters() {
+  const searchValue = searchInput.value.toLowerCase();
+  const statusValue = statusFilter.value;
+  const methodValue = methodFilter.value;
+
+  const items = document.querySelectorAll(".error");
+
+  items.forEach((item) => {
+    const text = item.innerText.toLowerCase();
+    const status = item.dataset.status;
+    const method = item.dataset.method;
+
+    const matchesSearch = text.includes(searchValue);
+    const matchesStatus = !statusValue || status === statusValue;
+    const matchesMethod = !methodValue || method === methodValue;
+
+    item.style.display = (matchesSearch && matchesStatus && matchesMethod) ? "" : "none";
+  });
+}
 
 if (searchInput) {
-  searchInput.addEventListener("input", () => {
-    const value = searchInput.value.toLowerCase();
-    const items = document.querySelectorAll(".error");
+  searchInput.addEventListener("input", applyFilters);
+}
 
-    items.forEach((item) => {
-      const text = item.innerText.toLowerCase();
-      item.style.display = text.includes(value) ? "" : "none";
-    });
-  });
+if (statusFilter) {
+  statusFilter.addEventListener("change", applyFilters);
+}
+
+if (methodFilter) {
+  methodFilter.addEventListener("change", applyFilters);
 }
 
 const container = document.getElementById("errors");
@@ -145,6 +175,7 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       <div><b>URL:</b> ${url}</div>
       <div><b>Method:</b> ${method}</div>
       <div><b>Status:</b> ${status}</div>
+      <button class="copy-jira-btn" onclick="copyToJira('${url}', '${method}', '${status}', '${errorSummary.replace(/'/g, "\\'")}', '${errorDetails.replace(/'/g, "\\'").replace(/\n/g, '\\n')}')">Copy to JIRA</button>
 
       <details>
         <summary><b>Request Headers</b></summary>
@@ -158,7 +189,7 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
 
       <details>
         <summary><b>Response body</b></summary>
-        <pre>${responseBody}</pre>
+        <pre>${body}</pre>
       </details>
 
       <details open>
@@ -166,6 +197,9 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
         <pre>${errorDetails}</pre>
       </details>
     `;
+
+    div.dataset.status = status;
+    div.dataset.method = method;
 
     container.prepend(div);
   });
