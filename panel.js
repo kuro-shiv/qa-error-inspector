@@ -26,12 +26,21 @@ function applyFilters() {
     const status = item.dataset.status;
     const method = item.dataset.method;
 
-    // Search specifically in URL, similar to Google search
-    const matchesSearch = !searchValue || urlText.includes(searchValue);
-    const matchesStatus = !statusValue || status === statusValue;
-    const matchesMethod = !methodValue || method === methodValue;
+    // When searching, only show items that match the search, ignore other filters
+    // When not searching, apply all filters
+    let shouldShow = false;
 
-    item.style.display = (matchesSearch && matchesStatus && matchesMethod) ? "" : "none";
+    if (searchValue) {
+      // When searching, only show if URL contains search term
+      shouldShow = urlText.includes(searchValue);
+    } else {
+      // When not searching, apply all filters
+      const matchesStatus = !statusValue || status === statusValue;
+      const matchesMethod = !methodValue || method === methodValue;
+      shouldShow = matchesStatus && matchesMethod;
+    }
+
+    item.style.display = shouldShow ? "" : "none";
   });
 }
 
@@ -58,8 +67,68 @@ if (clearBtn && container) {
   });
 }
 
-// Copy to JIRA function
-function copyToJira(url, method, status, summary, details) {
+// Settings modal functionality
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsModal = document.getElementById("settingsModal");
+const closeSettings = document.getElementById("closeSettings");
+const saveSettings = document.getElementById("saveSettings");
+const ignoreUrlsTextarea = document.getElementById("ignoreUrls");
+
+if (settingsBtn && settingsModal) {
+  settingsBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Load current ignore URLs
+    ignoreUrlsTextarea.value = ignoreUrls.join('\n');
+    settingsModal.style.display = "block";
+  });
+}
+
+if (closeSettings && settingsModal) {
+  closeSettings.addEventListener("click", () => {
+    settingsModal.style.display = "none";
+  });
+}
+
+// Close modal when clicking outside
+window.addEventListener("click", (event) => {
+  if (event.target === settingsModal) {
+    settingsModal.style.display = "none";
+  }
+});
+
+if (saveSettings && ignoreUrlsTextarea) {
+  saveSettings.addEventListener("click", () => {
+    const urls = ignoreUrlsTextarea.value.split('\n').map(url => url.trim()).filter(url => url);
+    ignoreUrls = urls;
+    chrome.storage.local.set({ ignoreUrls: urls }, () => {
+      settingsModal.style.display = "none";
+      // Show success notification
+      const notification = document.createElement('div');
+      notification.textContent = 'Settings saved!';
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 2000);
+    });
+  });
+}
+
+// Copy to JIRA function - make it global
+window.copyToJira = function(url, method, status, summary, details) {
   const jiraFormat = `*API Error Report*\n\n*URL:* ${url}\n*Method:* ${method}\n*Status:* ${status}\n*Summary:* ${summary}\n\n*Details:*\n{code}\n${details}\n{code}`;
   navigator.clipboard.writeText(jiraFormat).then(() => {
     // Show temporary success message
@@ -105,7 +174,7 @@ function copyToJira(url, method, status, summary, details) {
       document.body.removeChild(notification);
     }, 2000);
   });
-}
+};
 
 // Export JSON function
 const exportBtn = document.getElementById("exportBtn");
@@ -140,6 +209,16 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
   const method = request?.request?.method || "";
 
   if (method === "OPTIONS") return;
+
+  // If there's an active search, don't add new requests
+  const currentSearchValue = searchInput.value.toLowerCase();
+  if (currentSearchValue) {
+    // Check if this URL matches the search
+    const urlText = url.toLowerCase();
+    if (!urlText.includes(currentSearchValue)) {
+      return; // Don't add this request if it doesn't match the search
+    }
+  }
 
   // -------- HEADERS EXTRACTION --------
   const requestHeaders = request?.request?.headers ? request.request.headers.map(h => `${h.name}: ${h.value}`).join('\n') : 'No request headers';
@@ -258,7 +337,7 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       <div><b>URL:</b> ${url}</div>
       <div><b>Method:</b> ${method}</div>
       <div><b>Status:</b> ${status}</div>
-      <button class="copy-jira-btn" onclick="copyToJira('${url}', '${method}', '${status}', '${errorSummary.replace(/'/g, "\\'")}', '${errorDetails.replace(/'/g, "\\'").replace(/\n/g, '\\n')}')">Copy to JIRA</button>
+      <button class="copy-jira-btn">Copy to JIRA</button>
 
       <details>
         <summary><b>Request Headers</b></summary>
@@ -280,6 +359,16 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
         <pre>${errorDetails}</pre>
       </details>
     `;
+
+    // Add event listener to the copy button
+    const copyBtn = div.querySelector('.copy-jira-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.copyToJira(url, method, status, errorSummary, errorDetails);
+      });
+    }
 
     div.dataset.status = status;
     div.dataset.method = method;

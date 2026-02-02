@@ -4,7 +4,7 @@
   "icons":{
     "128": "icons/icon.png"
   },
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "Chrome DevTools extension to detect failed APIs & GraphQL errors during QA testing",
   "devtools_page": "devtools.html",
   "permissions": ["storage"]
