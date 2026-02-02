@@ -15,7 +15,7 @@ function applyFilters() {
   const statusValue = statusFilter.value;
   const methodValue = methodFilter.value;
 
-  const items = document.querySelectorAll(".error");
+  const items = document.querySelectorAll(".error, .request");
 
   items.forEach((item) => {
     const text = item.innerText.toLowerCase();
@@ -126,12 +126,14 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
     const isHttpError =
       typeof status === "number" && status >= 400;
 
-    const shouldShow =
+    const isError =
       graphQLError ||
       hasNoBody ||
-      isHttpError;
+      isHttpError ||
+      hasErrorInBody;
 
-    if (!shouldShow || !container) return;
+    // Show all requests, but classify as error or normal
+    if (!container) return;
 
     // -------- ERROR DETAILS EXTRACTION --------
     let errorDetails = graphQLError;
@@ -166,7 +168,7 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
     }
 
     const div = document.createElement("div");
-    div.className = "error";
+    div.className = isError ? "error" : "request";
 
     const time = new Date().toLocaleTimeString();
 
