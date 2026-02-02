@@ -18,11 +18,16 @@ function applyFilters() {
   const items = document.querySelectorAll(".error, .request");
 
   items.forEach((item) => {
-    const text = item.innerText.toLowerCase();
+    // Extract URL from the second div (index 1) which contains "URL: <actual_url>"
+    const divs = item.querySelectorAll('div');
+    const urlDiv = divs[1]; // URL is in the second div
+    const urlText = urlDiv ? urlDiv.textContent.replace('URL: ', '').toLowerCase() : '';
+
     const status = item.dataset.status;
     const method = item.dataset.method;
 
-    const matchesSearch = text.includes(searchValue);
+    // Search specifically in URL, similar to Google search
+    const matchesSearch = !searchValue || urlText.includes(searchValue);
     const matchesStatus = !statusValue || status === statusValue;
     const matchesMethod = !methodValue || method === methodValue;
 
@@ -57,9 +62,48 @@ if (clearBtn && container) {
 function copyToJira(url, method, status, summary, details) {
   const jiraFormat = `*API Error Report*\n\n*URL:* ${url}\n*Method:* ${method}\n*Status:* ${status}\n*Summary:* ${summary}\n\n*Details:*\n{code}\n${details}\n{code}`;
   navigator.clipboard.writeText(jiraFormat).then(() => {
-    alert("Copied to clipboard in JIRA format!");
+    // Show temporary success message
+    const notification = document.createElement('div');
+    notification.textContent = 'Copied to JIRA format!';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      z-index: 10000;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 2000);
   }).catch(err => {
     console.error('Failed to copy: ', err);
+    // Show error message
+    const notification = document.createElement('div');
+    notification.textContent = 'Failed to copy to clipboard';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f44336;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      z-index: 10000;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 2000);
   });
 }
 
@@ -70,8 +114,9 @@ if (exportBtn) {
   exportBtn.addEventListener("click", () => {
     const items = document.querySelectorAll(".error, .request");
     const data = Array.from(items).map(item => {
-      const url = item.querySelector('div:contains("URL:")')?.textContent.replace('URL: ', '') || '';
-      const method = item.querySelector('div:contains("Method:")')?.textContent.replace('Method: ', '') || '';
+      const divs = item.querySelectorAll('div');
+      const url = divs[1]?.textContent.replace('URL: ', '') || '';
+      const method = divs[2]?.textContent.replace('Method: ', '') || '';
       const status = item.dataset.status || '';
       const summary = item.querySelector('details summary')?.textContent || '';
       const details = item.querySelector('details pre')?.textContent || '';

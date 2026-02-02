@@ -6,7 +6,7 @@
 - [x] Implement copyToJira function for copy functionality
 - [x] Add exportBtn event listener and export JSON functionality
 - [x] Ensure search, status, and method filters work properly on all requests
-- [ ] Test the extension to verify all issues are resolved
+- [x] Test the extension to verify all issues are resolved
 
 ## Progress Tracking
 - [x] Task 1: Modify to show all APIs
@@ -14,4 +14,4 @@
 - [x] Task 3: Implement copy
 - [x] Task 4: Implement export
 - [x] Task 5: Ensure filters work
-- [ ] Task 6: Test functionality
+- [x] Task 6: Test functionality
