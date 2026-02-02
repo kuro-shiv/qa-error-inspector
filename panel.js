@@ -53,6 +53,42 @@ if (clearBtn && container) {
   });
 }
 
+// Copy to JIRA function
+function copyToJira(url, method, status, summary, details) {
+  const jiraFormat = `*API Error Report*\n\n*URL:* ${url}\n*Method:* ${method}\n*Status:* ${status}\n*Summary:* ${summary}\n\n*Details:*\n{code}\n${details}\n{code}`;
+  navigator.clipboard.writeText(jiraFormat).then(() => {
+    alert("Copied to clipboard in JIRA format!");
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+  });
+}
+
+// Export JSON function
+const exportBtn = document.getElementById("exportBtn");
+
+if (exportBtn) {
+  exportBtn.addEventListener("click", () => {
+    const items = document.querySelectorAll(".error, .request");
+    const data = Array.from(items).map(item => {
+      const url = item.querySelector('div:contains("URL:")')?.textContent.replace('URL: ', '') || '';
+      const method = item.querySelector('div:contains("Method:")')?.textContent.replace('Method: ', '') || '';
+      const status = item.dataset.status || '';
+      const summary = item.querySelector('details summary')?.textContent || '';
+      const details = item.querySelector('details pre')?.textContent || '';
+      return { url, method, status, summary, details };
+    });
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'api-requests.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
 chrome.devtools.network.onRequestFinished.addListener((request) => {
   const status = request?.response?.status;
   const url = request?.request?.url || "(unknown)";
